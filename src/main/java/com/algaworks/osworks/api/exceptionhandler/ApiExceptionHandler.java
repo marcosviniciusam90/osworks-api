@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,32 +30,32 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(NegocioException.class)
     public ResponseEntity<Object> handleNegocioException(NegocioException ex, WebRequest request) {
         HttpStatus status = HttpStatus.BAD_REQUEST;
-        ExceptionError exceptionError = newExceptionError(status, ex.getMessage(), null);
-        return handleExceptionInternal(ex, exceptionError, new HttpHeaders(), status, request);
+        Problem problem = newProblem(status, ex.getMessage(), null);
+        return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
     }
 
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
-        List<ExceptionError.Campo> campos = new ArrayList<>();
+        List<Problem.Campo> campos = new ArrayList<>();
 
         for (ObjectError error : ex.getBindingResult().getAllErrors()) {
             String nome = ((FieldError) error).getField();
             //No getLocale() poderia passar outras linguagens caso o sistema dê suporte e especicar no messages.properties
             String mensagem = messageSource.getMessage(error, LocaleContextHolder.getLocale());
-            campos.add(new ExceptionError.Campo(nome, mensagem));
+            campos.add(new Problem.Campo(nome, mensagem));
         }
 
         String titulo = "Um ou mais campos inválidos. Preencha corretamente e tente novamente";
-        ExceptionError exceptionError = newExceptionError(status, titulo, campos);
-        return handleExceptionInternal(ex, exceptionError, headers, status, request);
+        Problem problem = newProblem(status, titulo, campos);
+        return handleExceptionInternal(ex, problem, headers, status, request);
     }
 
-    private ExceptionError newExceptionError(HttpStatus status, String titulo, List<ExceptionError.Campo> campos) {
-        ExceptionError exceptionError = new ExceptionError();
-        exceptionError.setStatus(status.value());
-        exceptionError.setTitulo(titulo);
-        exceptionError.setDataHora(LocalDateTime.now());
-        exceptionError.setCampos(campos);
-        return exceptionError;
+    private Problem newProblem(HttpStatus status, String titulo, List<Problem.Campo> campos) {
+        Problem problem = new Problem();
+        problem.setStatus(status.value());
+        problem.setTitulo(titulo);
+        problem.setDataHora(OffsetDateTime.now());
+        problem.setCampos(campos);
+        return problem;
     }
 }
