@@ -1,5 +1,6 @@
 package com.algaworks.osworks.api.exceptionhandler;
 
+import com.algaworks.osworks.domain.exception.EntidadeNaoEncontraException;
 import com.algaworks.osworks.domain.exception.NegocioException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
@@ -27,13 +28,6 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
     @Autowired
     private MessageSource messageSource;
 
-    @ExceptionHandler(NegocioException.class)
-    public ResponseEntity<Object> handleNegocioException(NegocioException ex, WebRequest request) {
-        HttpStatus status = HttpStatus.BAD_REQUEST;
-        Problem problem = newProblem(status, ex.getMessage(), null);
-        return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
-    }
-
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         List<Problem.Campo> campos = new ArrayList<>();
@@ -48,6 +42,21 @@ public class ApiExceptionHandler extends ResponseEntityExceptionHandler {
         String titulo = "Um ou mais campos inválidos. Preencha corretamente e tente novamente";
         Problem problem = newProblem(status, titulo, campos);
         return handleExceptionInternal(ex, problem, headers, status, request);
+    }
+
+    @ExceptionHandler(NegocioException.class)
+    public ResponseEntity<Object> handleNegocioException(NegocioException ex, WebRequest request) {
+        return handle(ex, HttpStatus.BAD_REQUEST, request);
+    }
+
+    @ExceptionHandler(EntidadeNaoEncontraException.class)
+    public ResponseEntity<Object> handleNegocioException(EntidadeNaoEncontraException ex, WebRequest request) {
+        return handle(ex, HttpStatus.NOT_FOUND, request);
+    }
+
+    private ResponseEntity<Object> handle(NegocioException ex, HttpStatus status, WebRequest request) {
+        Problem problem = newProblem(status, ex.getMessage(), null);
+        return handleExceptionInternal(ex, problem, new HttpHeaders(), status, request);
     }
 
     private Problem newProblem(HttpStatus status, String titulo, List<Problem.Campo> campos) {
