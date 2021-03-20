@@ -44,11 +44,18 @@ public class OrdemServicoController {
     @GetMapping("/{ordemServicoId}")
     public ResponseEntity<OrdemServicoModel> buscar (@PathVariable Long ordemServicoId) {
         Optional<OrdemServico> ordemServico = ordemServicoRepository.findById(ordemServicoId);
+
         if(ordemServico.isPresent()) {
             OrdemServicoModel ordemServicoModel = toModel(ordemServico.get());
             return ResponseEntity.ok(ordemServicoModel);
         }
         return ResponseEntity.notFound().build();
+    }
+
+    @PutMapping("/{ordemServicoId}/finalizacao")
+    @ResponseStatus(HttpStatus.ACCEPTED)
+    public void finalizar(@PathVariable Long ordemServicoId) {
+        gestaoOrdemServicoService.finalizar(ordemServicoId);
     }
 
     private OrdemServicoModel toModel(OrdemServico ordemServico) {

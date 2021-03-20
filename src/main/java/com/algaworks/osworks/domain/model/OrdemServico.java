@@ -1,8 +1,12 @@
 package com.algaworks.osworks.domain.model;
 
+import com.algaworks.osworks.domain.exception.NegocioException;
+
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 @Entity
@@ -22,6 +26,9 @@ public class OrdemServico {
 
     private OffsetDateTime dataAbertura;
     private OffsetDateTime dataFinalizacao;
+
+    @OneToMany(mappedBy = "ordemServico")
+    private List<Comentario> comentarios = new ArrayList<>();
 
     public Long getId() {
         return id;
@@ -79,6 +86,14 @@ public class OrdemServico {
         this.dataFinalizacao = dataFinalizacao;
     }
 
+    public List<Comentario> getComentarios() {
+        return comentarios;
+    }
+
+    public void setComentarios(List<Comentario> comentarios) {
+        this.comentarios = comentarios;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -90,5 +105,17 @@ public class OrdemServico {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public void finalizar() {
+        if(!estaAberta()) {
+            throw new NegocioException("Ordem de serviço não pode ser finalizada, pois a mesma não está aberta.");
+        }
+        status = StatusOrdemServico.FINALIZADA;
+        dataFinalizacao = OffsetDateTime.now();
+    }
+
+    private boolean estaAberta() {
+        return StatusOrdemServico.ABERTA.equals(status);
     }
 }
